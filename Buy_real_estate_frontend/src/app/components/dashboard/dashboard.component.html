@@ -1,0 +1,120 @@
+<div class="dashboard-container" *ngIf="!loading">
+  <div class="dashboard-header">
+    <div>
+      <h1>Welcome, {{ username }}</h1>
+      <span class="role-badge">{{ role }}</span>
+    </div>
+    <button class="btn-logout" (click)="onLogout()" [disabled]="logoutLoading">
+      {{ logoutLoading ? 'Logging out...' : 'Logout' }}
+    </button>
+  </div>
+
+  <div class="dashboard-content">
+    <!-- Left: Add Property Form -->
+    <div class="form-column">
+      <h2>{{ editingId ? 'Edit Property' : 'Add Property' }}</h2>
+
+      <div class="form-message" *ngIf="formMessage" [class.error]="formError" [class.success]="!formError">
+        {{ formMessage }}
+      </div>
+
+      <form (ngSubmit)="onSubmitProperty()">
+        <div class="form-group">
+          <label for="type">Type</label>
+          <select id="type" [(ngModel)]="propertyForm.type" name="type">
+            <option *ngFor="let t of propertyTypes" [value]="t">{{ t }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="location">Location</label>
+          <input id="location" type="text" [(ngModel)]="propertyForm.location" name="location" placeholder="Location">
+        </div>
+
+        <div class="form-group">
+          <label for="area">Area (sq ft)</label>
+          <input id="area" type="number" [(ngModel)]="propertyForm.area" name="area" placeholder="Area">
+        </div>
+
+        <div class="form-group">
+          <label for="landmark">Nearest Landmark</label>
+          <input id="landmark" type="text" [(ngModel)]="propertyForm.nearestLandmark" name="nearestLandmark" placeholder="Landmark">
+        </div>
+
+        <div class="form-group">
+          <label for="price">Price</label>
+          <input id="price" type="number" [(ngModel)]="propertyForm.price" name="price" placeholder="Price">
+        </div>
+
+        <button type="submit" class="btn-primary" [disabled]="formLoading">
+          {{ formLoading ? 'Saving...' : (editingId ? 'Save Property' : 'Add Property') }}
+        </button>
+        <button type="button" class="btn-cancel-form" *ngIf="editingId" (click)="cancelEdit()">Cancel</button>
+      </form>
+    </div>
+
+    <!-- Right: Property Listing -->
+    <div class="list-column">
+      <div class="list-header">
+        <h2>Properties</h2>
+        <div class="list-actions">
+          <button class="btn-fav-toggle" [class.active]="showFavoritesOnly" (click)="toggleFavoritesView()">
+            {{ showFavoritesOnly ? 'All Properties' : 'My Favorites' }}
+          </button>
+          <span>{{ showFavoritesOnly ? favTotal : total }} total</span>
+        </div>
+      </div>
+
+      <p *ngIf="showFavoritesOnly ? favLoading : listLoading">Loading properties...</p>
+
+      <p *ngIf="!(showFavoritesOnly ? favLoading : listLoading) && (showFavoritesOnly ? favoriteProperties : properties).length === 0">
+        {{ showFavoritesOnly ? 'No favorites yet.' : 'No properties found.' }}
+      </p>
+
+      <table *ngIf="!(showFavoritesOnly ? favLoading : listLoading) && (showFavoritesOnly ? favoriteProperties : properties).length > 0">
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Area (sq ft)</th>
+            <th>Landmark</th>
+            <th>Price</th>
+            <th>Favorite</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let property of (showFavoritesOnly ? favoriteProperties : properties)">
+            <td>{{ property.type }}</td>
+            <td>{{ property.location }}</td>
+            <td>{{ property.area | number }}</td>
+            <td>{{ property.nearestLandmark }}</td>
+            <td>Rs. {{ property.price | number }}</td>
+            <td>
+              <button class="btn-fav" [class.favorited]="isFavorite(property._id)" (click)="toggleFavorite(property._id)">
+                {{ isFavorite(property._id) ? 'Unfavorite' : 'Favorite' }}
+              </button>
+            </td>
+            <td>
+              <div class="action-buttons" *ngIf="canEdit(property.createdBy)">
+                <button class="btn-edit" (click)="onEditProperty(property)">Edit</button>
+                <button class="btn-delete" (click)="onDeleteProperty(property._id)">Delete</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Pagination -->
+      <div class="pagination" *ngIf="(showFavoritesOnly ? favTotalPages : totalPages) > 1">
+        <button (click)="goToPage((showFavoritesOnly ? favCurrentPage : currentPage) - 1)" [disabled]="(showFavoritesOnly ? favCurrentPage : currentPage) === 1">Prev</button>
+        <span>Page {{ showFavoritesOnly ? favCurrentPage : currentPage }} of {{ showFavoritesOnly ? favTotalPages : totalPages }}</span>
+        <button (click)="goToPage((showFavoritesOnly ? favCurrentPage : currentPage) + 1)" [disabled]="(showFavoritesOnly ? favCurrentPage : currentPage) === (showFavoritesOnly ? favTotalPages : totalPages)">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="dashboard-container" *ngIf="loading">
+  <p>Loading...</p>
+</div>
